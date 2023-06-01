@@ -155,6 +155,11 @@ const camera = [
   },
 ];
 
+battery.sort(function (a, b) {
+  if (a.batteryName > b.batteryName) return 1;
+  else return -1;
+});
+
 class Battery {
   constructor(batteryName, capacityAh, voltage, maxDraw, endVoltage) {
     this.batteryName = batteryName;
@@ -176,6 +181,8 @@ class Battery {
     return (this.maxWatt() / sumWatt).toFixed(1);
   }
 
+  // Create battery options
+
   createBatteryElement(sumWatt) {
     const listItem = document.createElement("li");
     listItem.classList.add("list-item");
@@ -190,6 +197,8 @@ class Battery {
     return listItem;
   }
 }
+
+//making objects of battery
 
 const batteryObjects = [];
 battery.forEach((batt) => {
@@ -212,4 +221,91 @@ class Camera {
     this.model = model;
     this.powerConsumptionWh = powerConsumptionWh;
   }
+
+  //
+  createModelElement(brand, index) {
+    const option = document.createElement("option");
+    option.value = index;
+    option.innerHTML = this.model;
+    return this.brand === brand ? option : null;
+  }
 }
+
+//sorting camera in order of alphabet
+const cameraSort = camera.sort(function (a, b) {
+  if (a.model > b.model) {
+    return 1;
+  } else {
+    return -1;
+  }
+});
+
+// making the objects of camera
+let cameraObjects = [];
+camera.forEach((obj) =>
+  cameraObjects.push(
+    new Camera(obj["brand"], obj["model"], obj["powerConsumptionWh"])
+  )
+);
+
+// making the list of brands
+let brandsDic = {};
+camera.forEach((dict) => {
+  brandsDic[dict["brand"]] = 1;
+});
+
+// Sort in order of alphabet
+const brands = Object.keys(brandsDic).sort();
+
+// create brand options
+const brandOptions = document.querySelector(".brand-options");
+brands.forEach((brand) => {
+  const option = document.createElement("option");
+  option.value = brand;
+  option.innerHTML = brand;
+  brandOptions.append(option);
+});
+
+const modelOptions = document.querySelector(".model-options");
+cameraObjects.forEach((obj, index) => {
+  modelOptions.append(obj.createModelElement(brands[0], index));
+});
+
+brandOptions.addEventListener("change", (e) => {
+  modelOptions.innerHTML = "";
+  cameraObjects.forEach((obj, index) => {
+    modelOptions.append(obj.createModelElement(e.target.value, index));
+  });
+  updateBattList();
+});
+
+modelOptions.addEventListener("change", updateBattList);
+
+const inputWatt = document.getElementById("wattage");
+inputWatt.addEventListener("change", updateBattList);
+
+const batteryTopDiv = document.querySelector(".battery-list");
+batteryObjects.forEach((battObj) => {
+  batteryTopDiv.append(
+    battObj.createBatteryElement(
+      parseInt(inputWatt.value) +
+        cameraObjects[modelOptions.value].powerConsumptionWh
+    )
+  );
+});
+
+function updateBattList() {
+  const sumWatt =
+    parseInt(inputWatt.value) +
+    cameraObjects[modelOptions.value].powerConsumptionWh;
+  batteryTopDiv.innerHTML = "";
+  batteryObjects.forEach((batt) => {
+    if (batt.endWatt() > sumWatt) {
+      batteryTopDiv.append(batt.createBatteryElement(sumWatt));
+    }
+  });
+}
+
+console.log(brands);
+console.log(brandsDic);
+console.log(cameraObjects);
